@@ -110,6 +110,10 @@ func (e *EasyPay) MerchantIdentityMetadata() map[string]string {
 }
 
 func (e *EasyPay) CreatePayment(ctx context.Context, req payment.CreatePaymentRequest) (*payment.CreatePaymentResponse, error) {
+	// XunhuPay speaks a different protocol; dispatch before the epay flow.
+	if e.isXunhuPay() {
+		return e.createXunhuPayment(ctx, req)
+	}
 	// Payment mode determined by instance config, not payment type.
 	// "popup" → hosted page (submit.php); "qrcode"/default → API call (mapi.php).
 	mode := e.config["paymentMode"]
@@ -205,6 +209,9 @@ func (e *EasyPay) resolveURLs(req payment.CreatePaymentRequest) (string, string)
 }
 
 func (e *EasyPay) QueryOrder(ctx context.Context, tradeNo string) (*payment.QueryOrderResponse, error) {
+	if e.isXunhuPay() {
+		return e.queryXunhuOrder(ctx, tradeNo)
+	}
 	params := map[string]string{
 		"act": "order", "pid": e.config["pid"],
 		"key": e.config["pkey"], "out_trade_no": tradeNo,
@@ -236,6 +243,9 @@ func (e *EasyPay) QueryOrder(ctx context.Context, tradeNo string) (*payment.Quer
 }
 
 func (e *EasyPay) VerifyNotification(_ context.Context, rawBody string, _ map[string]string) (*payment.PaymentNotification, error) {
+	if e.isXunhuPay() {
+		return e.verifyXunhuNotification(rawBody)
+	}
 	values, err := url.ParseQuery(rawBody)
 	if err != nil {
 		return nil, fmt.Errorf("parse notify: %w", err)

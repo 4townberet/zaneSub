@@ -412,6 +412,15 @@ func TestUpdateProviderInstanceRejectsProtectedConfigChangesWhilePendingOrders(t
 			wantValue:     "pid-test",
 		},
 		{
+			name:          "easypay protocol switch",
+			providerKey:   payment.TypeEasyPay,
+			createConfig:  validEasyPayProviderConfig,
+			supportedType: []string{payment.TypeAlipay},
+			updateConfig:  map[string]string{"protocol": "xunhupay"},
+			fieldName:     "protocol",
+			wantValue:     "",
+		},
+		{
 			name:          "stripe currency",
 			providerKey:   payment.TypeStripe,
 			createConfig:  validStripeProviderConfig,
@@ -517,6 +526,15 @@ func TestUpdateProviderInstanceAllowsSafeConfigChangesWhilePendingOrders(t *test
 			updateConfig:  map[string]string{"appId": "alipay-app-test"},
 			fieldName:     "appId",
 			wantValue:     "alipay-app-test",
+		},
+		{
+			name:          "easypay blank protocol defaults to epay",
+			providerKey:   payment.TypeEasyPay,
+			createConfig:  validEasyPayProviderConfig,
+			supportedType: []string{payment.TypeAlipay},
+			updateConfig:  map[string]string{"protocol": "epay"},
+			fieldName:     "protocol",
+			wantValue:     "epay",
 		},
 	}
 

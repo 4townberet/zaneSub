@@ -5824,6 +5824,8 @@ export default {
         validationTypesRequired: 'Please select at least one supported payment type',
         validationFieldRequired: '{field} is required',
         field_apiBase: 'API Base URL',
+        field_protocol: 'Protocol',
+        field_protocolHint: 'For standard EasyPay (epay), enter just the gateway domain; /mapi.php is appended automatically. For XunhuPay: PID = Appid, PKey = secret, API Base URL = the full gateway https://api.xunhupay.com/payment/do.html, and set the notify URL in the XunhuPay console to your-domain/api/v1/payment/webhook/easypay.',
         field_notifyUrl: 'Notify URL',
         field_returnUrl: 'Return URL',
         callbackBaseUrl: 'Callback Base URL',

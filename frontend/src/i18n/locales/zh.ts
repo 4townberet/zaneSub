@@ -5980,6 +5980,8 @@ export default {
         validationTypesRequired: '请至少选择一种支持的支付方式',
         validationFieldRequired: '{field} 不能为空',
         field_apiBase: 'API 基础地址',
+        field_protocol: '协议',
+        field_protocolHint: '标准易支付(epay)填网关域名即可，系统自动拼接 /mapi.php。选「虎皮椒」时：PID 填 Appid、PKey 填密钥、API 基础地址填完整网关 https://api.xunhupay.com/payment/do.html，异步通知地址在虎皮椒后台填 你的域名/api/v1/payment/webhook/easypay。',
         field_notifyUrl: '异步通知地址',
         field_returnUrl: '同步跳转地址',
         callbackBaseUrl: '回调基础地址',

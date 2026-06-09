@@ -112,6 +112,10 @@ export const PROVIDER_CALLBACK_PATHS: Record<string, CallbackPaths> = {
 /** Per-provider config fields (excludes notifyUrl/returnUrl which are handled separately). */
 export const PROVIDER_CONFIG_FIELDS: Record<string, ConfigFieldDef[]> = {
   easypay: [
+    { key: 'protocol', label: '', sensitive: false, defaultValue: 'epay', hintKey: 'admin.settings.payment.field_protocolHint', options: [
+      { value: 'epay', label: '标准易支付 (epay)' },
+      { value: 'xunhupay', label: '虎皮椒 (xunhupay)' },
+    ] },
     { key: 'pid', label: 'PID', sensitive: false },
     { key: 'pkey', label: 'PKey', sensitive: true },
     { key: 'apiBase', label: '', sensitive: false },

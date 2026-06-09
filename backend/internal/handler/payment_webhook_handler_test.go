@@ -161,6 +161,12 @@ func TestExtractOutTradeNo(t *testing.T) {
 			want:        "sub2_123",
 		},
 		{
+			name:        "xunhupay trade order payload",
+			providerKey: "easypay",
+			rawBody:     "trade_order_id=sub2_xh_123&status=OD",
+			want:        "sub2_xh_123",
+		},
+		{
 			name:        "alipay query payload",
 			providerKey: "alipay",
 			rawBody:     "notify_time=2026-04-20+12%3A00%3A00&out_trade_no=sub2_456",
