@@ -496,3 +496,27 @@ func TestEasyPayIsXunhuPay(t *testing.T) {
 		}
 	}
 }
+
+func TestXunhuFlexibleStringUnquotedValueValidation(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		text string
+		want bool
+	}{
+		{name: "number", text: "123456", want: true},
+		{name: "ipv4", text: "127.0.0.1", want: true},
+		{name: "ipv6", text: "2001:db8::1", want: true},
+		{name: "plain text", text: "not-an-id", want: false},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := xunhuFlexibleStringUnquotedValueIsValid(tc.text); got != tc.want {
+				t.Fatalf("xunhuFlexibleStringUnquotedValueIsValid(%q) = %v, want %v", tc.text, got, tc.want)
+			}
+		})
+	}
+}

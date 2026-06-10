@@ -16,6 +16,15 @@ export interface DefaultSubscriptionSetting {
   validity_days: number;
 }
 
+export interface BalanceRechargeTier {
+  id: string;
+  label: string;
+  pay_amount: number;
+  credit_amount: number;
+  enabled: boolean;
+  sort_order: number;
+}
+
 // ── 平台限额类型 ──────────────────────────────────────────────────
 export type PlatformType = "anthropic" | "openai" | "gemini" | "antigravity"
 export type QuotaWindowType = "daily" | "weekly" | "monthly"
@@ -574,6 +583,7 @@ export interface SystemSettings {
   payment_enabled_types: string[];
   payment_balance_disabled: boolean;
   payment_balance_recharge_multiplier: number;
+  payment_balance_recharge_tiers?: BalanceRechargeTier[];
   payment_recharge_fee_rate: number;
   payment_load_balance_strategy: string;
   payment_product_name_prefix: string;
@@ -805,6 +815,7 @@ export interface UpdateSettingsRequest {
   payment_enabled_types?: string[];
   payment_balance_disabled?: boolean;
   payment_balance_recharge_multiplier?: number;
+  payment_balance_recharge_tiers?: BalanceRechargeTier[];
   payment_recharge_fee_rate?: number;
   payment_load_balance_strategy?: string;
   payment_product_name_prefix?: string;

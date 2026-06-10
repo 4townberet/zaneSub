@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -36,6 +37,7 @@ const (
 	xunhuProtocol      = "xunhupay"
 	xunhuVersion       = "1.1"
 	xunhuTradeStatusOK = "OD"
+	xunhuHTTPTimeout   = 30 * time.Second
 )
 
 // isXunhuPay reports whether this EasyPay instance is configured for the
@@ -142,6 +144,9 @@ func (e *EasyPay) createXunhuPayment(ctx context.Context, req payment.CreatePaym
 		out.PayURL = resp.URL
 	} else {
 		out.QRCode = resp.URLQR
+		if out.QRCode != "" {
+			out.QRCodeType = "image"
+		}
 		if out.QRCode == "" {
 			out.PayURL = resp.URL
 		}
@@ -255,7 +260,7 @@ func (e *EasyPay) postXunhuJSON(ctx context.Context, endpoint string, params map
 	req.Header.Set("Content-Type", "application/json")
 	client := e.httpClient
 	if client == nil {
-		client = &http.Client{Timeout: easypayHTTPTimeout}
+		client = &http.Client{Timeout: xunhuHTTPTimeout}
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -346,8 +351,13 @@ func xunhuVerifyJSONSign(body []byte, appsecret, sign string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for _, params := range candidates {
+	for i, params := range candidates {
 		if xunhuVerifySign(params, appsecret, sign) {
+			if i > 0 {
+				slog.Warn("xunhupay response signature matched fallback JSON canonicalization",
+					"candidate_index", i,
+					"candidate_count", len(candidates))
+			}
 			return true, nil
 		}
 	}
@@ -441,9 +451,16 @@ func (s *xunhuFlexibleString) UnmarshalJSON(data []byte) error {
 		*s = xunhuFlexibleString(value)
 		return nil
 	}
-	if _, err := strconv.ParseFloat(text, 64); err != nil && net.ParseIP(text) == nil {
+	if !xunhuFlexibleStringUnquotedValueIsValid(text) {
 		return fmt.Errorf("invalid xunhupay string value: %s", text)
 	}
 	*s = xunhuFlexibleString(text)
 	return nil
+}
+
+func xunhuFlexibleStringUnquotedValueIsValid(text string) bool {
+	if _, err := strconv.ParseFloat(text, 64); err == nil {
+		return true
+	}
+	return net.ParseIP(text) != nil
 }

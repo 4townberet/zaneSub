@@ -43,6 +43,14 @@ function defaultAlipayHint(context: PaymentScenarioContext): string {
   return 'payment.errors.alipayDesktopQrHint'
 }
 
+function isGatewayTimeout(code: string | undefined, normalizedMessage: string): boolean {
+  if (code !== 'PAYMENT_GATEWAY_ERROR') return false
+  return normalizedMessage.includes('context deadline exceeded')
+    || normalizedMessage.includes('client.timeout exceeded')
+    || normalizedMessage.includes('timeout exceeded')
+    || normalizedMessage.includes('i/o timeout')
+}
+
 export function describePaymentScenarioError(
   error: unknown,
   context: PaymentScenarioContext,
@@ -55,6 +63,12 @@ export function describePaymentScenarioError(
       ? error.message
       : String(error || ''))
   const normalizedMessage = message.toLowerCase()
+
+  if (isGatewayTimeout(code, normalizedMessage)) {
+    return {
+      messageKey: 'payment.errors.paymentGatewayTimeout',
+    }
+  }
 
   if (method === 'wxpay') {
     if (code === 'WECHAT_H5_NOT_AUTHORIZED') {

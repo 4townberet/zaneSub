@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 )
@@ -26,6 +28,7 @@ const (
 	easypayHTTPTimeout     = 10 * time.Second
 	maxEasypayResponseSize = 1 << 20 // 1MB
 	maxEasypayErrorSummary = 512
+	maxEasyPaySubjectRunes = 128
 	tradeStatusSuccess     = "TRADE_SUCCESS"
 	signTypeMD5            = "MD5"
 	paymentModePopup       = "popup"
@@ -52,10 +55,14 @@ func NewEasyPay(instanceID string, config map[string]string) (*EasyPay, error) {
 		cfg[k] = v
 	}
 	cfg["apiBase"] = normalizeEasyPayAPIBase(cfg["apiBase"])
+	timeout := easypayHTTPTimeout
+	if strings.EqualFold(strings.TrimSpace(cfg["protocol"]), xunhuProtocol) {
+		timeout = xunhuHTTPTimeout
+	}
 	return &EasyPay{
 		instanceID: instanceID,
 		config:     cfg,
-		httpClient: &http.Client{Timeout: easypayHTTPTimeout},
+		httpClient: &http.Client{Timeout: timeout},
 	}, nil
 }
 
@@ -110,6 +117,9 @@ func (e *EasyPay) MerchantIdentityMetadata() map[string]string {
 }
 
 func (e *EasyPay) CreatePayment(ctx context.Context, req payment.CreatePaymentRequest) (*payment.CreatePaymentResponse, error) {
+	if err := validateEasyPaySubject(req.Subject); err != nil {
+		return nil, err
+	}
 	// XunhuPay speaks a different protocol; dispatch before the epay flow.
 	if e.isXunhuPay() {
 		return e.createXunhuPayment(ctx, req)
@@ -206,6 +216,23 @@ func (e *EasyPay) resolveURLs(req payment.CreatePaymentRequest) (string, string)
 		returnURL = e.config["returnUrl"]
 	}
 	return notifyURL, returnURL
+}
+
+func validateEasyPaySubject(subject string) error {
+	subject = strings.TrimSpace(subject)
+	if subject == "" {
+		return fmt.Errorf("easypay subject is required")
+	}
+	if !utf8.ValidString(subject) {
+		return fmt.Errorf("easypay subject must be valid UTF-8")
+	}
+	if utf8.RuneCountInString(subject) > maxEasyPaySubjectRunes {
+		return fmt.Errorf("easypay subject exceeds %d characters", maxEasyPaySubjectRunes)
+	}
+	if strings.ContainsFunc(subject, unicode.IsControl) {
+		return fmt.Errorf("easypay subject contains control characters")
+	}
+	return nil
 }
 
 func (e *EasyPay) QueryOrder(ctx context.Context, tradeNo string) (*payment.QueryOrderResponse, error) {

@@ -56,6 +56,17 @@ func (s *PaymentService) CreateOrder(ctx context.Context, req CreateOrderRequest
 	if plan != nil {
 		orderAmount = plan.Price
 		limitAmount = plan.Price
+	} else if req.OrderType == payment.OrderTypeBalance && strings.TrimSpace(req.BalanceTierID) != "" {
+		tier, ok := findEnabledBalanceRechargeTier(cfg.BalanceRechargeTiers, req.BalanceTierID)
+		if !ok {
+			return nil, infraerrors.BadRequest("BALANCE_RECHARGE_TIER_NOT_FOUND", "balance recharge tier is not available")
+		}
+		if err := validateRechargeAmountRange(tier.PayAmount, cfg); err != nil {
+			return nil, err
+		}
+		req.Amount = tier.PayAmount
+		orderAmount = tier.CreditAmount
+		limitAmount = tier.PayAmount
 	} else if req.OrderType == payment.OrderTypeBalance {
 		orderAmount = calculateCreditedBalance(req.Amount, cfg.BalanceRechargeMultiplier)
 	}
@@ -119,14 +130,27 @@ func (s *PaymentService) validateOrderInput(ctx context.Context, req CreateOrder
 	if req.OrderType == payment.OrderTypeSubscription {
 		return s.validateSubOrder(ctx, req)
 	}
+	if req.OrderType == payment.OrderTypeBalance && strings.TrimSpace(req.BalanceTierID) != "" {
+		return nil, nil
+	}
 	if math.IsNaN(req.Amount) || math.IsInf(req.Amount, 0) || req.Amount <= 0 {
 		return nil, infraerrors.BadRequest("INVALID_AMOUNT", "amount must be a positive number")
 	}
-	if (cfg.MinAmount > 0 && req.Amount < cfg.MinAmount) || (cfg.MaxAmount > 0 && req.Amount > cfg.MaxAmount) {
-		return nil, infraerrors.BadRequest("INVALID_AMOUNT", "amount out of range").
-			WithMetadata(map[string]string{"min": fmt.Sprintf("%.2f", cfg.MinAmount), "max": fmt.Sprintf("%.2f", cfg.MaxAmount)})
+	if err := validateRechargeAmountRange(req.Amount, cfg); err != nil {
+		return nil, err
 	}
 	return nil, nil
+}
+
+func validateRechargeAmountRange(amount float64, cfg *PaymentConfig) error {
+	if cfg == nil {
+		return nil
+	}
+	if (cfg.MinAmount > 0 && amount < cfg.MinAmount) || (cfg.MaxAmount > 0 && amount > cfg.MaxAmount) {
+		return infraerrors.BadRequest("INVALID_AMOUNT", "amount out of range").
+			WithMetadata(map[string]string{"min": fmt.Sprintf("%.2f", cfg.MinAmount), "max": fmt.Sprintf("%.2f", cfg.MaxAmount)})
+	}
+	return nil
 }
 
 func (s *PaymentService) validateSubOrder(ctx context.Context, req CreateOrderRequest) (*dbent.SubscriptionPlan, error) {
@@ -688,6 +712,7 @@ func buildCreateOrderResponse(order *dbent.PaymentOrder, req CreateOrderRequest,
 		OutTradeNo:   order.OutTradeNo,
 		PayURL:       pr.PayURL,
 		QRCode:       pr.QRCode,
+		QRCodeType:   pr.QRCodeType,
 		ClientSecret: pr.ClientSecret,
 		IntentID:     pr.IntentID,
 		Currency:     pr.Currency,
@@ -710,6 +735,9 @@ func buildWeChatPaymentOAuthStartURL(req CreateOrderRequest, scope string) (stri
 	q.Set("payment_type", strings.TrimSpace(req.PaymentType))
 	if req.Amount > 0 {
 		q.Set("amount", strconv.FormatFloat(req.Amount, 'f', -1, 64))
+	}
+	if tierID := strings.TrimSpace(req.BalanceTierID); tierID != "" {
+		q.Set("balance_tier_id", tierID)
 	}
 	if orderType := strings.TrimSpace(req.OrderType); orderType != "" {
 		q.Set("order_type", orderType)

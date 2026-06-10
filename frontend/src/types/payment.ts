@@ -65,12 +65,22 @@ export interface CheckoutInfoResponse {
   plans: SubscriptionPlan[]
   balance_disabled: boolean
   balance_recharge_multiplier: number
+  balance_recharge_tiers: BalanceRechargeTier[]
   recharge_fee_rate: number
   help_text: string
   help_image_url: string
   stripe_publishable_key: string
   /** When true, Alipay payments on mobile always show the QR code instead of redirecting */
   alipay_force_qrcode?: boolean
+}
+
+export interface BalanceRechargeTier {
+  id: string
+  label: string
+  pay_amount: number
+  credit_amount: number
+  enabled: boolean
+  sort_order: number
 }
 
 // ==================== Orders ====================
@@ -155,6 +165,7 @@ export interface ProviderInstance {
 
 export interface CreateOrderRequest {
   amount: number
+  balance_tier_id?: string
   payment_type: string
   order_type: string
   plan_id?: number
@@ -190,6 +201,7 @@ export interface CreateOrderResult {
   amount: number
   pay_url?: string
   qr_code?: string
+  qr_code_type?: string
   client_secret?: string
   intent_id?: string
   currency?: string

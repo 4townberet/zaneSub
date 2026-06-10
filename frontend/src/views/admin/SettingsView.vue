@@ -5922,6 +5922,59 @@
                     </p>
                   </div>
                 </div>
+                <div class="space-y-3 rounded-lg border border-gray-100 p-4 dark:border-dark-700">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ t("admin.settings.payment.balanceRechargeTiers") }}
+                      </h3>
+                      <p class="mt-0.5 text-xs text-gray-400">
+                        {{ t("admin.settings.payment.balanceRechargeTiersHint") }}
+                      </p>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" @click="addBalanceRechargeTier">
+                      {{ t("admin.settings.payment.addTier") }}
+                    </button>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100 text-sm dark:divide-dark-700">
+                      <thead>
+                        <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                          <th class="min-w-[9rem] px-2 py-2">{{ t("admin.settings.payment.tierLabel") }}</th>
+                          <th class="w-32 px-2 py-2">{{ t("admin.settings.payment.tierPayAmount") }}</th>
+                          <th class="w-32 px-2 py-2">{{ t("admin.settings.payment.tierCreditAmount") }}</th>
+                          <th class="w-24 px-2 py-2">{{ t("admin.settings.payment.tierSortOrder") }}</th>
+                          <th class="w-20 px-2 py-2">{{ t("admin.settings.payment.tierEnabled") }}</th>
+                          <th class="w-20 px-2 py-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+                        <tr v-for="(tier, index) in form.payment_balance_recharge_tiers" :key="tier.id || index">
+                          <td class="px-2 py-2">
+                            <input v-model="tier.label" type="text" class="input" />
+                          </td>
+                          <td class="px-2 py-2">
+                            <input v-model.number="tier.pay_amount" type="number" step="0.01" min="0.01" class="input" />
+                          </td>
+                          <td class="px-2 py-2">
+                            <input v-model.number="tier.credit_amount" type="number" step="0.01" min="0.01" class="input" />
+                          </td>
+                          <td class="px-2 py-2">
+                            <input v-model.number="tier.sort_order" type="number" step="1" class="input" />
+                          </td>
+                          <td class="px-2 py-2">
+                            <Toggle v-model="tier.enabled" />
+                          </td>
+                          <td class="px-2 py-2 text-right">
+                            <button type="button" class="btn btn-secondary btn-sm text-red-600 dark:text-red-400" @click="removeBalanceRechargeTier(index)">
+                              {{ t("admin.settings.payment.removeTier") }}
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
                 <!-- Row 3: Pending orders + load balance + cancel rate limit (all in one row) -->
                 <div class="flex flex-wrap items-end gap-4">
                   <div class="w-28">
@@ -6683,6 +6736,7 @@ import type {
   SystemSettings,
   UpdateSettingsRequest,
   DefaultSubscriptionSetting,
+  BalanceRechargeTier,
   DefaultPlatformQuotasMap,
   OpenAIFastPolicyRule,
   WeChatConnectMode,
@@ -6956,11 +7010,22 @@ interface DefaultSubscriptionGroupOption {
   [key: string]: unknown;
 }
 
+const defaultBalanceRechargeTiers = (): BalanceRechargeTier[] => [
+  { id: "tier_4_10", label: "4元10刀", pay_amount: 4, credit_amount: 10, enabled: true, sort_order: 10 },
+  { id: "tier_18_50", label: "18元50刀", pay_amount: 18, credit_amount: 50, enabled: true, sort_order: 20 },
+  { id: "tier_29_100", label: "29元100刀", pay_amount: 29, credit_amount: 100, enabled: true, sort_order: 30 },
+  { id: "tier_99_400", label: "99元400刀", pay_amount: 99, credit_amount: 400, enabled: true, sort_order: 40 },
+  { id: "tier_229_1000", label: "229元1000刀", pay_amount: 229, credit_amount: 1000, enabled: true, sort_order: 50 },
+  { id: "tier_499_2500", label: "499元2500刀", pay_amount: 499, credit_amount: 2500, enabled: true, sort_order: 60 },
+  { id: "tier_899_6000", label: "899元6000刀", pay_amount: 899, credit_amount: 6000, enabled: true, sort_order: 70 },
+];
+
 type SettingsForm = Omit<
   SystemSettings,
   | "wechat_connect_open_enabled"
   | "wechat_connect_mp_enabled"
   | "wechat_connect_mobile_enabled"
+  | "payment_balance_recharge_tiers"
 > & {
   smtp_password: string;
   turnstile_secret_key: string;
@@ -6978,6 +7043,7 @@ type SettingsForm = Omit<
   google_oauth_client_secret: string;
   force_email_on_third_party_signup: boolean;
   openai_advanced_scheduler_enabled: boolean;
+  payment_balance_recharge_tiers: BalanceRechargeTier[];
   // 系统全局平台限额 map；form 内始终归一化为全 4 平台对象（模板非空绑定依赖此不变量）
   default_platform_quotas: DefaultPlatformQuotasMap;
 };
@@ -7023,6 +7089,7 @@ const form = reactive<SettingsForm>({
   payment_order_timeout_minutes: 30,
   payment_balance_disabled: false,
   payment_balance_recharge_multiplier: 1,
+  payment_balance_recharge_tiers: defaultBalanceRechargeTiers(),
   payment_recharge_fee_rate: 0,
   payment_enabled_types: [],
   payment_help_image_url: "",
@@ -7811,6 +7878,13 @@ async function loadSettings() {
     form.default_subscriptions = normalizeDefaultSubscriptionSettings(
       settings.default_subscriptions,
     );
+    if (Object.prototype.hasOwnProperty.call(settings, "payment_balance_recharge_tiers")) {
+      form.payment_balance_recharge_tiers = Array.isArray(settings.payment_balance_recharge_tiers)
+        ? sanitizeBalanceRechargeTiers(settings.payment_balance_recharge_tiers)
+        : [];
+    } else {
+      form.payment_balance_recharge_tiers = defaultBalanceRechargeTiers();
+    }
     registrationEmailSuffixWhitelistTags.value =
       normalizeRegistrationEmailSuffixDomains(
         settings.registration_email_suffix_whitelist,
@@ -7980,6 +8054,62 @@ function findDuplicateDefaultSubscription(
     seenGroupIDs.add(item.group_id);
     return false;
   });
+}
+
+function roundMoney(value: unknown): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.round(parsed * 100) / 100;
+}
+
+function sanitizeBalanceRechargeTiers(tiers: BalanceRechargeTier[]): BalanceRechargeTier[] {
+  const usedIds = new Set<string>();
+  return (tiers || [])
+    .map((tier, index) => {
+      const payAmount = roundMoney(tier.pay_amount);
+      const creditAmount = roundMoney(tier.credit_amount);
+      const baseId =
+        String(tier.id || tier.label || `tier_${index + 1}`)
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "_")
+          .replace(/^_+|_+$/g, "") || `tier_${index + 1}`;
+      let id = baseId;
+      let suffix = 2;
+      while (usedIds.has(id)) {
+        id = `${baseId}_${suffix}`;
+        suffix += 1;
+      }
+      usedIds.add(id);
+      return {
+        id,
+        label: String(tier.label || "").trim(),
+        pay_amount: payAmount,
+        credit_amount: creditAmount,
+        enabled: tier.enabled !== false,
+        sort_order: Number.isFinite(Number(tier.sort_order))
+          ? Math.floor(Number(tier.sort_order))
+          : (index + 1) * 10,
+      };
+    })
+    .filter((tier) => tier.pay_amount > 0 && tier.credit_amount > 0)
+    .sort((a, b) => (a.sort_order - b.sort_order) || (a.pay_amount - b.pay_amount));
+}
+
+function addBalanceRechargeTier() {
+  const nextIndex = form.payment_balance_recharge_tiers.length + 1;
+  form.payment_balance_recharge_tiers.push({
+    id: `tier_custom_${Date.now()}`,
+    label: "",
+    pay_amount: 1,
+    credit_amount: 1,
+    enabled: true,
+    sort_order: nextIndex * 10,
+  });
+}
+
+function removeBalanceRechargeTier(index: number) {
+  form.payment_balance_recharge_tiers.splice(index, 1);
 }
 
 async function saveSettings() {
@@ -8294,6 +8424,9 @@ async function saveSettings() {
       payment_balance_disabled: form.payment_balance_disabled,
       payment_balance_recharge_multiplier:
         Number(form.payment_balance_recharge_multiplier) || 1,
+      payment_balance_recharge_tiers: sanitizeBalanceRechargeTiers(
+        form.payment_balance_recharge_tiers,
+      ),
       payment_recharge_fee_rate: Number(form.payment_recharge_fee_rate) || 0,
       payment_enabled_types: form.payment_enabled_types,
       payment_load_balance_strategy: form.payment_load_balance_strategy,

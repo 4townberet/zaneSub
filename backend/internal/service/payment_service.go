@@ -72,6 +72,7 @@ func generateRandomString(n int) string {
 type CreateOrderRequest struct {
 	UserID          int64
 	Amount          float64
+	BalanceTierID   string
 	PaymentType     string
 	OpenID          string
 	ClientIP        string
@@ -97,6 +98,7 @@ type CreateOrderResponse struct {
 	OutTradeNo   string                          `json:"out_trade_no,omitempty"`
 	PayURL       string                          `json:"pay_url,omitempty"`
 	QRCode       string                          `json:"qr_code,omitempty"`
+	QRCodeType   string                          `json:"qr_code_type,omitempty"`
 	ClientSecret string                          `json:"client_secret,omitempty"`
 	IntentID     string                          `json:"intent_id,omitempty"`
 	Currency     string                          `json:"currency,omitempty"`

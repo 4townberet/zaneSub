@@ -67,6 +67,18 @@ describe('describePaymentScenarioError', () => {
       hintKey: 'payment.errors.alipayDesktopQrHint',
     })
   })
+
+  it('maps payment gateway timeouts to a neutral retry prompt', () => {
+    expect(describePaymentScenarioError(
+      {
+        reason: 'PAYMENT_GATEWAY_ERROR',
+        message: 'payment gateway error: xunhupay create: Post "https://api.xunhupay.com/payment/do.html": context deadline exceeded (Client.Timeout exceeded while awaiting headers)',
+      },
+      { paymentMethod: 'wxpay', isMobile: false, isWechatBrowser: false },
+    )).toEqual({
+      messageKey: 'payment.errors.paymentGatewayTimeout',
+    })
+  })
 })
 
 describe('buildPaymentErrorToastMessage', () => {

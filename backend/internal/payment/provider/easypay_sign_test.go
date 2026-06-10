@@ -193,3 +193,17 @@ func TestEasyPayMerchantIdentityMetadata(t *testing.T) {
 		t.Fatalf("pid = %q, want %q", metadata["pid"], "1001")
 	}
 }
+
+func TestValidateEasyPaySubject(t *testing.T) {
+	t.Parallel()
+
+	if err := validateEasyPaySubject("Balance recharge 余额充值"); err != nil {
+		t.Fatalf("valid subject returned error: %v", err)
+	}
+	if err := validateEasyPaySubject(""); err == nil {
+		t.Fatal("empty subject should return error")
+	}
+	if err := validateEasyPaySubject("hello\nworld"); err == nil {
+		t.Fatal("subject with control character should return error")
+	}
+}

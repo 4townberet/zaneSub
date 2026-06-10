@@ -34,6 +34,7 @@ export interface PaymentRecoverySnapshot {
   orderId: number
   amount: number
   qrCode: string
+  qrCodeType: string
   expiresAt: string
   paymentType: string
   payUrl: string
@@ -74,6 +75,7 @@ export interface PaymentLaunchDecision {
 
 export interface BuildCreateOrderPayloadInput {
   amount: number
+  balanceTierId?: string
   paymentType: string
   orderType: OrderType
   planId?: number
@@ -129,6 +131,9 @@ export function buildCreateOrderPayload(input: BuildCreateOrderPayloadInput): Cr
       ? 'wechat_in_app_resume'
       : 'hosted_redirect',
   }
+  if (input.balanceTierId) {
+    payload.balance_tier_id = input.balanceTierId
+  }
 
   if (input.planId) {
     payload.plan_id = input.planId
@@ -149,6 +154,7 @@ export function decidePaymentLaunch(
     orderId: result.order_id,
     amount: result.amount,
     qrCode: result.qr_code || '',
+    qrCodeType: result.qr_code_type || '',
     expiresAt: result.expires_at || '',
     paymentType: visibleMethod,
     payUrl: result.pay_url || '',
@@ -267,6 +273,7 @@ export function readPaymentRecoverySnapshot(
       typeof parsed.orderId !== 'number'
       || typeof parsed.amount !== 'number'
       || typeof parsed.qrCode !== 'string'
+      || (parsed.qrCodeType != null && typeof parsed.qrCodeType !== 'string')
       || typeof parsed.expiresAt !== 'string'
       || typeof parsed.paymentType !== 'string'
       || typeof parsed.payUrl !== 'string'
@@ -297,6 +304,7 @@ export function readPaymentRecoverySnapshot(
       orderId: parsed.orderId,
       amount: parsed.amount,
       qrCode: parsed.qrCode,
+      qrCodeType: parsed.qrCodeType || '',
       expiresAt: parsed.expiresAt,
       paymentType: parsed.paymentType,
       payUrl: parsed.payUrl,
