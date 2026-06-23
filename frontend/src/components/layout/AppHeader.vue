@@ -81,7 +81,7 @@
                 :alt="displayName"
                 class="h-full w-full object-cover"
               >
-              <span v-else>{{ userInitials }}</span>
+              <img v-else src="/avatar-default.png" :alt="displayName" class="h-full w-full object-cover" />
             </div>
             <div class="hidden text-left md:block">
               <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -241,20 +241,6 @@ const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
 // 只在标准模式的管理员下显示新手引导按钮
 const showOnboardingButton = computed(() => {
   return !authStore.isSimpleMode && user.value?.role === 'admin'
-})
-
-const userInitials = computed(() => {
-  if (!user.value) return ''
-  // Prefer username, fallback to email
-  if (user.value.username) {
-    return user.value.username.substring(0, 2).toUpperCase()
-  }
-  if (user.value.email) {
-    // Get the part before @ and take first 2 chars
-    const localPart = user.value.email.split('@')[0]
-    return localPart.substring(0, 2).toUpperCase()
-  }
-  return ''
 })
 
 const displayName = computed(() => {

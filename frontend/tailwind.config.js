@@ -45,7 +45,7 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
-          950: '#020617'
+          950: '#0B0B0E'
         }
       },
       fontFamily: {
@@ -80,7 +80,9 @@ export default {
         'gradient-glass':
           'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
         'mesh-gradient':
-          'radial-gradient(at 40% 20%, rgba(20, 184, 166, 0.12) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(20, 184, 166, 0.08) 0px, transparent 50%)'
+          'radial-gradient(at 40% 20%, rgba(20, 184, 166, 0.12) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(20, 184, 166, 0.08) 0px, transparent 50%)',
+        'tech-dark':
+          'radial-gradient(ellipse 1400px 800px at 80% -5%, rgba(255,179,0,.28) 0%, rgba(255,140,0,.08) 50%, transparent 70%), linear-gradient(180deg, #0B0B0E 0%, #0E0C09 100%)'
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

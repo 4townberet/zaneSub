@@ -15,11 +15,10 @@
   <!-- Default Home Page -->
   <div
     v-else
-    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
+    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:bg-tech-dark"
   >
     <!-- Background Decorations -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div
+    <div class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden">      <div
         class="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-primary-400/20 blur-3xl"
       ></div>
       <div
@@ -34,6 +33,12 @@
       <div
         class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
       ></div>
+    </div>
+
+    <!-- Dark Mode Warm Glow -->
+    <div class="pointer-events-none absolute inset-0 overflow-hidden hidden dark:block">
+      <div class="absolute -right-40 -top-40 h-[700px] w-[700px] rounded-full bg-amber-400/15 blur-3xl"></div>
+      <div class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-yellow-500/8 blur-3xl"></div>
     </div>
 
     <!-- Header -->
@@ -138,41 +143,9 @@
             </div>
           </div>
 
-          <!-- Right: Terminal Animation -->
+          <!-- Right: Hero Image -->
           <div class="flex flex-1 justify-center lg:justify-end">
-            <div class="terminal-container">
-              <div class="terminal-window">
-                <!-- Window header -->
-                <div class="terminal-header">
-                  <div class="terminal-buttons">
-                    <span class="btn-close"></span>
-                    <span class="btn-minimize"></span>
-                    <span class="btn-maximize"></span>
-                  </div>
-                  <span class="terminal-title">terminal</span>
-                </div>
-                <!-- Terminal content -->
-                <div class="terminal-body">
-                  <div class="code-line line-1">
-                    <span class="code-prompt">$</span>
-                    <span class="code-cmd">curl</span>
-                    <span class="code-flag">-X POST</span>
-                    <span class="code-url">/v1/messages</span>
-                  </div>
-                  <div class="code-line line-2">
-                    <span class="code-comment"># Routing to upstream...</span>
-                  </div>
-                  <div class="code-line line-3">
-                    <span class="code-success">200 OK</span>
-                    <span class="code-response">{ "content": "Hello!" }</span>
-                  </div>
-                  <div class="code-line line-4">
-                    <span class="code-prompt">$</span>
-                    <span class="cursor"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img src="/hero-bee.png" alt="蜂厂长" class="w-full max-w-lg object-contain drop-shadow-2xl" />
           </div>
         </div>
 
