@@ -16,7 +16,10 @@ services:
   # Sub2API Application
   # ===========================================================================
   sub2api:
-    image: weishaw/sub2api:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: sub2api:custom
     container_name: sub2api
     restart: unless-stopped
     ulimits:
